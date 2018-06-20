@@ -75,3 +75,35 @@ def edge_weight(start_node, end_node, edges):
         return 0
 
     return match[0][2]
+
+
+def get_edge_from_data(symbol, bids, asks, strategy):
+    """Create edge between nodes based on provided data and strategy.
+
+    :param string symbol: name of the contract e.g. BTC/USD
+    :param list bids: list of bid pairs
+    :param list asks: list of ask pairs
+    :param string strategy: method used for edge weight. Allowed values are:
+                            mean: simple mean of values,
+                            weighted_mean: mean with volumes as weights
+                            best: min for ask and max for bids
+    :returns two edges (n1, n2, weight1), (n2, n1, weight2)
+    """
+    A, B = symbol.split('/')
+
+    if strategy == 'mean':
+        A_B_weight = sum(map(lambda x: x[0], bids)) / len(bids)
+        B_A_weight = 1 / (sum(map(lambda x: x[0], asks)) / len(bids))
+        return (A, B, A_B_weight), (B, A, B_A_weight)
+
+    if strategy == 'weighted_mean':
+        A_B_weight = sum(v * w for v, w in bids) / sum(map(lambda x: x[1], bids))
+        B_A_weight = 1 / (sum(v * w for v, w in asks) / sum(map(lambda x: x[1], asks)))
+        return (A, B, A_B_weight), (B, A, B_A_weight)
+
+    if strategy == 'best':
+        A_B_weight = max(map(lambda x: x[0], bids))
+        B_A_weight = 1 / (min(map(lambda x: x[0], asks)))
+        return (A, B, A_B_weight), (B, A, B_A_weight)
+
+    raise ValueError("Unknown strategy: %s" % strategy)
